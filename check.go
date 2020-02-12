@@ -147,10 +147,3 @@ func checkIfModifiedSince(r *http.Request, modTime time.Time) condResult {
 	}
 	return condTrue
 }
-
-var unixEpochTime = time.Unix(0, 0)
-
-// isZeroTime reports whether t is obviously unspecified (either zero or Unix()=0).
-func isZeroTime(t time.Time) bool {
-	return t.IsZero() || t.Equal(unixEpochTime)
-}
