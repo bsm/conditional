@@ -45,7 +45,7 @@ func ExampleCheck_ifModifiedSince() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(res.Status)
+	fmt.Println(res.Status) // => 304 Not Modified
 
 	// Output:
 	// 204 No Content
@@ -89,7 +89,7 @@ func ExampleCheck_ifNoneMatch() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(res.Status)
+	fmt.Println(res.Status) // => 304 Not Modified
 
 	// Output:
 	// 204 No Content
@@ -133,7 +133,7 @@ func ExampleCheck_ifMatch() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(res.Status)
+	fmt.Println(res.Status) // => 204 No Content
 
 	// finally, try it with a non-matching "If-Match"
 	req, err = http.NewRequest("GET", srv.URL, nil)
@@ -145,7 +145,7 @@ func ExampleCheck_ifMatch() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(res.Status)
+	fmt.Println(res.Status) // => 412 Precondition Failed
 
 	// Output:
 	// 204 No Content

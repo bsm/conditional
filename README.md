@@ -62,7 +62,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(res.Status)
+	fmt.Println(res.Status)	// => 304 Not Modified
 
 }
 ```
