@@ -12,8 +12,40 @@ import (
 // This method relies on ETag and Last-Modified headers being already set on the
 // http.ResponseWriter.
 func Check(w http.ResponseWriter, r *http.Request) (done bool) {
-	etag := w.Header().Get("ETag")
-	modTime, _ := http.ParseTime(w.Header().Get("Last-Modified"))
+	return CheckStatus(w, r) != 0
+}
+
+// CheckStatus behaves like Check, but returns the http status code
+// that was used for the response instead of a boolean.
+//
+// 	http.StatusNotModified
+// 	http.StatusPreconditionFailed
+//	0 = response header was not written
+//
+func CheckStatus(w http.ResponseWriter, r *http.Request) (code int) {
+	code = Evaluate(w.Header(), r)
+	switch code {
+	case http.StatusNotModified:
+		NotModified(w)
+	case http.StatusPreconditionFailed:
+		w.WriteHeader(http.StatusPreconditionFailed)
+	}
+	return
+}
+
+// Evaluate evaluates request preconditions and return the appropriate
+// http status code, which is one of the following:
+//
+// 	http.StatusNotModified - content was not modified
+// 	http.StatusPreconditionFailed - requested content was modified meanwhile
+//	0 - otherwise.
+//
+// Unlike Check it does not automatically write a response to the client.
+// Like Check, it relies on ETag and Last-Modified headers being already
+// set.
+func Evaluate(h http.Header, r *http.Request) int {
+	etag := h.Get("ETag")
+	modTime, _ := http.ParseTime(h.Get("Last-Modified"))
 
 	// This function carefully follows RFC 7232 section 6.
 	ch := checkIfMatch(r, etag)
@@ -21,26 +53,22 @@ func Check(w http.ResponseWriter, r *http.Request) (done bool) {
 		ch = checkIfUnmodifiedSince(r, modTime)
 	}
 	if ch == condFalse {
-		w.WriteHeader(http.StatusPreconditionFailed)
-		return true
+		return http.StatusPreconditionFailed
 	}
 
 	switch checkIfNoneMatch(r, etag) {
 	case condFalse:
 		if r.Method == "GET" || r.Method == "HEAD" {
-			NotModified(w)
-		} else {
-			w.WriteHeader(http.StatusPreconditionFailed)
+			return http.StatusNotModified
 		}
-		return true
+		return http.StatusPreconditionFailed
 	case condNone:
 		if checkIfModifiedSince(r, modTime) == condFalse {
-			NotModified(w)
-			return true
+			return http.StatusNotModified
 		}
 	}
 
-	return false
+	return 0
 }
 
 // condResult is the result of an HTTP request precondition check.
